@@ -1,0 +1,23 @@
+FROM node:24-alpine
+
+RUN npm install -g pnpm
+
+WORKDIR /app
+
+# Kopieer workspace configuratie
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY packages/shared/package.json ./packages/shared/
+COPY packages/backend/package.json ./packages/backend/
+
+# Installeer dependencies
+RUN pnpm install
+
+# Kopieer broncode
+COPY packages/shared ./packages/shared
+COPY packages/backend ./packages/backend
+COPY tsconfig.base.json ./
+
+WORKDIR /app/packages/backend
+
+# Genereer Prisma client + voer migraties uit + start dev server
+CMD ["sh", "-c", "pnpm db:generate && pnpm db:migrate:prod && pnpm dev"]

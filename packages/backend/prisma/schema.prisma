@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  PLANNER
+}
+
+enum OrderStatus {
+  PENDING
+  ASSIGNED
+  LOCKED
+  SENT_TO_SAP
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  role         Role     @default(PLANNER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Driver {
+  id            String    @id @default(uuid())
+  name          String
+  licenseNumber String    @unique
+  isAvailable   Boolean   @default(true)
+  vehicles      Vehicle[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("drivers")
+}
+
+model Vehicle {
+  id             String    @id @default(uuid())
+  code           String    @unique
+  capacityKarren Int       @default(40)
+  isLocked       Boolean   @default(false)
+  plannedDate    DateTime?
+  driver         Driver?   @relation(fields: [driverId], references: [id])
+  driverId       String?
+  orders         Order[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("vehicles")
+}
+
+model Order {
+  id                  String      @id @default(uuid())
+  sapOrderId          String      @unique
+  customerId          String
+  customerName        String
+  deliveryAddress     String
+  deliveryLat         Float?
+  deliveryLng         Float?
+  requestedDeliveryAt DateTime?
+  volumeKarren        Int
+  status              OrderStatus @default(PENDING)
+  notes               String?
+  sapRawPayload       Json        @default("{}")
+  vehicle             Vehicle?    @relation(fields: [vehicleId], references: [id])
+  vehicleId           String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+
+  @@map("orders")
+}
