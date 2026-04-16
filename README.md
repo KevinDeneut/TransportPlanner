@@ -256,11 +256,11 @@ Zo kan later de `SapRestAdapter` worden ingevuld (of vervangen door een SOAP/XML
 - [x] Authenticatie: login, JWT middleware, rollen
 - [x] Shared types package opzetten
 
-### Fase 2 — Kern backend
-- [ ] Order CRUD endpoints
-- [ ] Vehicle & Driver endpoints
-- [ ] SAP Mock Adapter (testen zonder echte SAP)
-- [ ] Socket.io: real-time push van events naar planners
+### Fase 2 — Kern backend ✅
+- [x] Order CRUD endpoints
+- [x] Vehicle & Driver endpoints
+- [x] SAP Mock Adapter (testen zonder echte SAP)
+- [x] Socket.io: real-time push van events naar planners
 
 ### Fase 3 — Kaart & UI
 - [ ] Leaflet kaart (BE/NL/DE/FR/IT)
