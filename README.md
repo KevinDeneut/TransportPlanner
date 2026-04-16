@@ -262,10 +262,13 @@ Zo kan later de `SapRestAdapter` worden ingevuld (of vervangen door een SOAP/XML
 - [x] SAP Mock Adapter (testen zonder echte SAP)
 - [x] Socket.io: real-time push van events naar planners
 
-### Fase 3 — Kaart & UI
-- [ ] Leaflet kaart (BE/NL/DE/FR/IT)
-- [ ] Order-bolletjes: klikbaar, detailmodal, bewerkbaar
-- [ ] Geocoding via Nominatim (adres → coördinaten)
+### Fase 3 — Kaart & UI ✅
+- [x] Leaflet kaart (BE/NL/DE/FR/IT) met OpenStreetMap tegels
+- [x] Order-bolletjes: klikbaar, detailmodal, bewerkbaar
+- [x] Geocoding via Nominatim (adres → coördinaten)
+- [x] Real-time markerupdates via Socket.io
+- [x] Legende met kleur per orderstatus
+- [x] Layout: kaart + voertuigpaneel (placeholder, Fase 4)
 
 ### Fase 4 — Planning workflow
 - [ ] Voertuigpaneel (01 t/m N voertuigen)

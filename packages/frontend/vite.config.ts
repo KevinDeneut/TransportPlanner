@@ -9,6 +9,17 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-map": ["leaflet", "react-leaflet"],
+          "vendor-query": ["@tanstack/react-query", "zustand"],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: {

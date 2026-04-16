@@ -3,6 +3,7 @@ import { SapWebhookSchema, type ApiSuccess, type Order as SharedOrder } from "@t
 import { prisma } from "../../lib/prisma.js";
 import { createSapAdapter } from "../../adapters/sap/index.js";
 import { sendError } from "../../lib/errors.js";
+import { geocodeAddress } from "../../lib/geocode.js";
 import type { Order, Vehicle, Driver } from "@prisma/client";
 
 type OrderWithVehicle = Order & { vehicle: (Vehicle & { driver: Driver | null }) | null };
@@ -51,20 +52,30 @@ export async function sapRoutes(app: FastifyInstance): Promise<void> {
     }
 
     // Upsert: als de order al bestaat (bijv. update vanuit SAP), overschrijven
-    const { requestedDeliveryAt, ...rest } = normalized;
+    const { requestedDeliveryAt, deliveryLat, deliveryLng, ...rest } = normalized;
     const parsedDate = requestedDeliveryAt ? new Date(requestedDeliveryAt) : null;
+
+    // Geocode als er geen coördinaten in de SAP payload zitten
+    let lat = deliveryLat;
+    let lng = deliveryLng;
+    if (!lat || !lng) {
+      const geo = await geocodeAddress(rest.deliveryAddress);
+      if (geo) { lat = geo.lat; lng = geo.lng; }
+    }
     const order = await prisma.order.upsert({
       where: { sapOrderId: normalized.sapOrderId },
       create: {
         ...rest,
+        deliveryLat: lat,
+        deliveryLng: lng,
         ...(parsedDate ? { requestedDeliveryAt: parsedDate } : {}),
         sapRawPayload: parseResult.data as object,
       },
       update: {
         customerName: rest.customerName,
         deliveryAddress: rest.deliveryAddress,
-        deliveryLat: rest.deliveryLat,
-        deliveryLng: rest.deliveryLng,
+        deliveryLat: lat,
+        deliveryLng: lng,
         requestedDeliveryAt: parsedDate,
         volumeKarren: rest.volumeKarren,
         notes: rest.notes,

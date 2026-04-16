@@ -7,6 +7,7 @@ import {
 } from "@transport-planner/shared";
 import { prisma } from "../../lib/prisma.js";
 import { sendError, sendNotFound } from "../../lib/errors.js";
+import { geocodeAddress } from "../../lib/geocode.js";
 import type { Order, Vehicle, Driver } from "@prisma/client";
 
 type OrderWithVehicle = Order & { vehicle: (Vehicle & { driver: Driver | null }) | null };
@@ -67,10 +68,21 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
 
-    const { requestedDeliveryAt, ...rest } = result.data;
+    const { requestedDeliveryAt, deliveryLat, deliveryLng, ...rest } = result.data;
+
+    // Geocode het leveradres als er geen coördinaten meegegeven zijn
+    let lat = deliveryLat;
+    let lng = deliveryLng;
+    if (!lat || !lng) {
+      const geo = await geocodeAddress(rest.deliveryAddress);
+      if (geo) { lat = geo.lat; lng = geo.lng; }
+    }
+
     const order = await prisma.order.create({
       data: {
         ...rest,
+        deliveryLat: lat,
+        deliveryLng: lng,
         requestedDeliveryAt: requestedDeliveryAt ? new Date(requestedDeliveryAt) : undefined,
         sapRawPayload: request.body as object,
       },
@@ -97,7 +109,7 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
       return;
     }
 
-    const { vehicleId, requestedDeliveryAt, ...rest } = result.data;
+    const { vehicleId, requestedDeliveryAt, deliveryLat, deliveryLng, deliveryAddress, ...rest } = result.data;
 
     // Bepaal nieuwe status op basis van vehicleId
     let status = existing.status;
@@ -105,10 +117,21 @@ export async function ordersRoutes(app: FastifyInstance): Promise<void> {
       status = vehicleId === null ? "PENDING" : "ASSIGNED";
     }
 
+    // Re-geocode als het leveradres gewijzigd is
+    let lat = deliveryLat;
+    let lng = deliveryLng;
+    if (deliveryAddress && deliveryAddress !== existing.deliveryAddress) {
+      const geo = await geocodeAddress(deliveryAddress);
+      if (geo) { lat = geo.lat; lng = geo.lng; }
+    }
+
     const updated = await prisma.order.update({
       where: { id: request.params.id },
       data: {
         ...rest,
+        deliveryAddress,
+        deliveryLat: lat,
+        deliveryLng: lng,
         vehicleId,
         status,
         requestedDeliveryAt:
